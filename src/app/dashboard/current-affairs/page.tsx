@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import api from "@/lib/api";
 import {
     Plus,
     Newspaper,
-    ChevronRight,
-    MoreVertical,
     Trash2,
     Edit3,
     Search,
@@ -18,303 +16,47 @@ import {
     Upload,
     Eye,
     MessageSquare,
-    Bold,
-    Italic,
-    Strikethrough,
-    List,
-    ListOrdered,
-    Heading1,
-    Heading2,
-    Paperclip
 } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
-import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Placeholder from '@tiptap/extension-placeholder'
-import TextStyle from '@tiptap/extension-text-style'
-import { Extension } from '@tiptap/core'
-import Image from '@tiptap/extension-image'
-import TiptapLink from '@tiptap/extension-link'
-
-// Custom Font Size Extension
-const FontSize = Extension.create({
-    name: 'fontSize',
-    addOptions() {
-        return {
-            types: ['textStyle'],
-        }
-    },
-    addGlobalAttributes() {
-        return [
-            {
-                types: this.options.types,
-                attributes: {
-                    fontSize: {
-                        default: null,
-                        parseHTML: element => element.style.fontSize.replace(/['"]+/g, ''),
-                        renderHTML: attributes => {
-                            if (!attributes.fontSize) {
-                                return {}
-                            }
-                            return {
-                                style: `font-size: ${attributes.fontSize}`,
-                            }
-                        },
-                    },
-                },
-            },
-        ]
-    },
-    addCommands() {
-        return {
-            setFontSize: fontSize => ({ chain }) => {
-                return chain()
-                    .setMark('textStyle', { fontSize })
-                    .run()
-            },
-            unsetFontSize: () => ({ chain }) => {
-                return chain()
-                    .setMark('textStyle', { fontSize: null })
-                    .removeEmptyTextStyle()
-                    .run()
-            },
-        }
-    },
-})
+import MdEditor from 'react-markdown-editor-lite';
+import MarkdownIt from 'markdown-it';
+import 'react-markdown-editor-lite/lib/index.css';
 
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 
-const MenuBar = ({ editor }: { editor: any }) => {
-    if (!editor) {
-        return null;
-    }
+const mdParser = new MarkdownIt({ html: true, linkify: true, typographer: true }).enable('table');
 
-    const textTypes = [
-        { label: 'Normal', value: 'paragraph', active: () => editor.isActive('paragraph') },
-        { label: 'Heading 1', value: 'h1', active: () => editor.isActive('heading', { level: 1 }) },
-        { label: 'Heading 2', value: 'h2', active: () => editor.isActive('heading', { level: 2 }) },
-        { label: 'Heading 3', value: 'h3', active: () => editor.isActive('heading', { level: 3 }) },
-        { label: 'Heading 4', value: 'h4', active: () => editor.isActive('heading', { level: 4 }) },
-    ];
+const MarkdownEditor = ({ value, onChange }: { value: string; onChange: (text: string) => void }) => {
+    const handleEditorChange = useCallback(({ text }: { text: string }) => {
+        onChange(text);
+    }, [onChange]);
 
-    const fontSizes = ['12px', '14px', '16px', '18px', '20px', '24px', '30px', '36px'];
-
-    const getCurrentTextType = () => {
-        const active = textTypes.find(t => t.active());
-        return active ? active.label : 'Normal';
-    };
-
-    const [uploading, setUploading] = useState(false);
-    const [progress, setProgress] = useState(0);
-
-    const getCurrentFontSize = () => {
-        const attrs = editor.getAttributes('textStyle');
-        return attrs.fontSize || '16px';
+    const handleImageUpload = async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append("subject", "Current Affairs");
+        formData.append("type", "image");
+        formData.append("file", file);
+        const res = await api.post("/upload", formData, { headers: { "Content-Type": "multipart/form-data" } });
+        return res.data.url;
     };
 
     return (
-        <div className="flex flex-wrap items-center gap-1 p-2 bg-white/5 border-b border-white/5 overflow-x-auto">
-            {/* Text Type Dropdown */}
-            <div className="relative group">
-                <select 
-                    className="bg-white/10 text-gray-300 text-xs rounded-lg px-2 py-1.5 outline-none border border-transparent hover:border-white/20 transition-all cursor-pointer appearance-none pr-6 min-w-[100px]"
-                    value={textTypes.find(t => t.active())?.value || 'paragraph'}
-                    onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === 'paragraph') editor.chain().focus().setParagraph().run();
-                        else editor.chain().focus().toggleHeading({ level: parseInt(val.replace('h', '')) as any }).run();
-                    }}
-                >
-                    {textTypes.map(t => (
-                        <option key={t.value} value={t.value} className="bg-gray-900">{t.label}</option>
-                    ))}
-                </select>
-                <ChevronRight className="absolute right-1 top-1/2 -translate-y-1/2 rotate-90 text-gray-500 pointer-events-none" size={14} />
-            </div>
-
-            {/* Font Size Dropdown */}
-            <div className="relative group ml-1">
-                <select 
-                    className="bg-white/10 text-gray-300 text-xs rounded-lg px-2 py-1.5 outline-none border border-transparent hover:border-white/20 transition-all cursor-pointer appearance-none pr-6 min-w-[70px]"
-                    value={getCurrentFontSize()}
-                    onChange={(e) => {
-                        editor.chain().focus().setFontSize(e.target.value).run();
-                    }}
-                >
-                    {fontSizes.map(size => (
-                        <option key={size} value={size} className="bg-gray-900">{size}</option>
-                    ))}
-                </select>
-                <ChevronRight className="absolute right-1 top-1/2 -translate-y-1/2 rotate-90 text-gray-500 pointer-events-none" size={14} />
-            </div>
-
-            <div className="w-px h-6 bg-white/10 mx-1 hidden sm:block" />
-
-            <button
-                type="button"
-                onClick={() => editor.chain().focus().toggleBold().run()}
-                disabled={!editor.can().chain().focus().toggleBold().run()}
-                className={`p-2 rounded-lg transition-colors ${editor.isActive('bold') ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-                title="Bold"
-            >
-                <Bold size={16} />
-            </button>
-            <button
-                type="button"
-                onClick={() => editor.chain().focus().toggleItalic().run()}
-                disabled={!editor.can().chain().focus().toggleItalic().run()}
-                className={`p-2 rounded-lg transition-colors ${editor.isActive('italic') ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-                title="Italic"
-            >
-                <Italic size={16} />
-            </button>
-            <button
-                type="button"
-                onClick={() => editor.chain().focus().toggleStrike().run()}
-                disabled={!editor.can().chain().focus().toggleStrike().run()}
-                className={`p-2 rounded-lg transition-colors ${editor.isActive('strike') ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-                title="Strikethrough"
-            >
-                <Strikethrough size={16} />
-            </button>
-            
-            <div className="w-px h-6 bg-white/10 mx-1 hidden sm:block" />
-
-            <button
-                type="button"
-                onClick={() => editor.chain().focus().toggleBulletList().run()}
-                className={`p-2 rounded-lg transition-colors ${editor.isActive('bulletList') ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-                title="Bullet List"
-            >
-                <List size={16} />
-            </button>
-            <button
-                type="button"
-                onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                className={`p-2 rounded-lg transition-colors ${editor.isActive('orderedList') ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-                title="Ordered List"
-            >
-                <ListOrdered size={16} />
-            </button>
-
-            <button
-                type="button"
-                disabled={uploading}
-                onClick={() => {
-                    const fileInput = document.createElement('input');
-                    fileInput.type = 'file';
-                    fileInput.accept = 'image/*,.pdf,.doc,.docx,.txt,.md';
-                    fileInput.onchange = async (e: any) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-
-                        setUploading(true);
-                        setProgress(0);
-
-                        try {
-                            const formData = new FormData();
-                            // Append metadata BEFORE file for Cloudinary folder logic
-                            formData.append("subject", "Current Affairs");
-                            formData.append("type", file.type.startsWith('image/') ? 'image' : 
-                                            file.type === 'application/pdf' ? 'pdf' : 'other');
-                            formData.append("file", file);
-                            
-                            const res = await api.post("/upload", formData, {
-                                headers: { "Content-Type": "multipart/form-data" },
-                                onUploadProgress: (progressEvent) => {
-                                    const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || progressEvent.loaded));
-                                    setProgress(percentCompleted);
-                                }
-                            });
-                            
-                            const format = res.data.format || "";
-                            const url = res.data.url;
-                            
-                            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(format.toLowerCase())) {
-                                editor.chain().focus().setImage({ src: url }).run();
-                            } else {
-                                editor.chain().focus().setLink({ href: url }).insertContent(res.data.filename).run();
-                            }
-                        } catch (err: any) {
-                            console.error("Upload error:", err);
-                            const errorMsg = err.response?.data?.details || err.response?.data?.error || err.message || "Unknown error";
-                            alert("Failed to upload file: " + errorMsg);
-                        } finally {
-                            setUploading(false);
-                            setProgress(0);
-                        }
-                    };
-                    fileInput.click();
+        <div className="md-editor-dark">
+            <MdEditor
+                value={value}
+                style={{ height: '280px', border: 'none' }}
+                renderHTML={(text) => mdParser.render(text)}
+                onChange={handleEditorChange}
+                onImageUpload={handleImageUpload}
+                placeholder="Write the detailed news content here (supports **bold**, *italic*, tables, lists...)..."
+                config={{
+                    view: { menu: true, md: true, html: true },
+                    canView: { menu: true, md: true, html: true, fullScreen: true, hideMenu: true },
+                    table: { maxRow: 20, maxCol: 10 },
                 }}
-                className={`p-2 rounded-lg transition-colors ${uploading ? 'bg-primary/20 text-primary animate-pulse' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-                title="Attach Image or Document"
-            >
-                <Paperclip size={16} />
-            </button>
-
-            {uploading && (
-                <div className="absolute inset-x-0 -bottom-1 h-1 bg-white/5 overflow-hidden rounded-full">
-                    <div 
-                        className="h-full bg-primary transition-all duration-300 shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]" 
-                        style={{ width: `${progress}%` }} 
-                    />
-                </div>
-            )}
-        </div>
-    );
-};
-
-const TiptapEditor = ({ content, onChange, onSetEditor }: { content: string, onChange: (html: string) => void, onSetEditor: (editor: any) => void }) => {
-    const editor = useEditor({
-        extensions: [
-            StarterKit,
-            Placeholder.configure({
-                placeholder: 'Write the detailed news content here (use smileys! 😊)...',
-                emptyEditorClass: 'is-editor-empty',
-            }),
-            TextStyle,
-            FontSize,
-            Image.configure({
-                inline: true,
-                allowBase64: true,
-            }),
-            TiptapLink.configure({
-                openOnClick: false,
-                HTMLAttributes: {
-                    class: 'text-primary underline cursor-pointer',
-                },
-            }),
-        ],
-        content: content,
-        onUpdate: ({ editor }) => {
-            onChange(editor.getHTML());
-        },
-        immediatelyRender: false,
-    });
-
-    useEffect(() => {
-        if (editor) {
-            onSetEditor(editor);
-        }
-    }, [editor, onSetEditor]);
-
-    // Update editor content when modal reopens with different data
-    useEffect(() => {
-        if (editor && content !== editor.getHTML()) {
-            // Prevent recursive updates if the user is typing
-            const isSameContent = editor.getHTML() === content || editor.getText() === content;
-            if (!isSameContent) {
-                editor.commands.setContent(content);
-            }
-        }
-    }, [content, editor]);
-
-    return (
-        <div className="flex flex-col h-full tiptap-container [&_.ProseMirror]:min-h-[200px] [&_.ProseMirror]:p-4 [&_.ProseMirror]:outline-none [&_.ProseMirror]:text-white [&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.ProseMirror_p.is-editor-empty:first-child::before]:text-gray-500 [&_.ProseMirror_p.is-editor-empty:first-child::before]:float-left [&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none [&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0 [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:ml-6 [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:ml-6 [&_.ProseMirror_h1]:text-3xl [&_.ProseMirror_h1]:font-bold [&_.ProseMirror_h1]:mb-4 [&_.ProseMirror_h2]:text-2xl [&_.ProseMirror_h2]:font-bold [&_.ProseMirror_h2]:mb-3 [&_.ProseMirror_h3]:text-xl [&_.ProseMirror_h3]:font-bold [&_.ProseMirror_h3]:mb-2 [&_.ProseMirror_h4]:text-lg [&_.ProseMirror_h4]:font-bold [&_.ProseMirror_h4]:mb-2">
-            <MenuBar editor={editor} />
-            <EditorContent editor={editor} className="flex-1 cursor-text" onClick={() => editor?.commands.focus()} />
+            />
         </div>
     );
 };
@@ -352,7 +94,7 @@ export default function CurrentAffairsPage() {
     const [activeTab, setActiveTab] = useState<"oneliner" | "mcq">("oneliner");
     const [viewContent, setViewContent] = useState<any | null>(null);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-    const [tiptapEditor, setTiptapEditor] = useState<any>(null);
+    // markdown editor — no extra state needed
 
     const [formData, setFormData] = useState({
         id: "",
@@ -774,22 +516,17 @@ export default function CurrentAffairsPage() {
                                             // @ts-ignore
                                             theme="dark"
                                             onEmojiClick={(emojiData: any) => {
-                                                if (tiptapEditor) {
-                                                    tiptapEditor.chain().focus().insertContent(emojiData.emoji).run();
-                                                } else {
-                                                    setFormData(prev => ({ ...prev, content: prev.content + emojiData.emoji }));
-                                                }
+                                                setFormData(prev => ({ ...prev, content: prev.content + emojiData.emoji }));
                                                 setShowEmojiPicker(false);
                                             }} 
                                         />
                                     </div>
                                 )}
 
-                                <div className="bg-[#0D1B2A] border border-white/10 rounded-xl overflow-hidden min-h-[250px] flex flex-col focus-within:ring-2 focus-within:ring-primary/50 transition-all">
-                                    <TiptapEditor
-                                        content={formData.content}
+                                <div className="rounded-xl overflow-hidden border border-white/10 focus-within:ring-2 focus-within:ring-primary/50 transition-all">
+                                    <MarkdownEditor
+                                        value={formData.content}
                                         onChange={(content) => setFormData({ ...formData, content })}
-                                        onSetEditor={setTiptapEditor}
                                     />
                                 </div>
                             </div>

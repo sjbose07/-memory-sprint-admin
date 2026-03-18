@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import api from "@/lib/api";
 import Link from "next/link";
 import {
@@ -13,264 +13,47 @@ import {
   Edit3,
   FileText,
   FileQuestion,
-  ChevronRight,
-  Bold,
-  Italic,
-  List,
   Eye,
-  MessageSquare,
   XCircle,
   MoreVertical,
-  Paperclip // Added Paperclip icon
 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import dynamic from "next/dynamic";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
-import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Placeholder from '@tiptap/extension-placeholder'
-import TextStyle from '@tiptap/extension-text-style'
-import { Extension } from '@tiptap/core'; // Moved Extension import to @tiptap/core
-import Image from '@tiptap/extension-image'; // Added Image extension
-import TiptapLink from '@tiptap/extension-link'; // Aliased to avoid conflict with next/link
+import MdEditor from 'react-markdown-editor-lite';
+import MarkdownIt from 'markdown-it';
+import 'react-markdown-editor-lite/lib/index.css';
 
-// Custom Font Size Extension
-const FontSize = Extension.create({
-    name: 'fontSize',
-    addOptions() {
-        return {
-            types: ['textStyle'],
-        }
-    },
-    addGlobalAttributes() {
-        return [
-            {
-                types: this.options.types,
-                attributes: {
-                    fontSize: {
-                        default: null,
-                        parseHTML: element => element.style.fontSize.replace(/['"]+/g, ''),
-                        renderHTML: attributes => {
-                            if (!attributes.fontSize) {
-                                return {}
-                            }
-                            return {
-                                style: `font-size: ${attributes.fontSize}`,
-                            }
-                        },
-                    },
-                },
-            },
-        ]
-    },
-    addCommands() {
-        return {
-            setFontSize: fontSize => ({ chain }) => {
-                return chain()
-                    .setMark('textStyle', { fontSize })
-                    .run()
-            },
-            unsetFontSize: () => ({ chain }) => {
-                return chain()
-                    .setMark('textStyle', { fontSize: null })
-                    .removeEmptyTextStyle()
-                    .run()
-            },
-        }
-    },
-})
+const mdParser = new MarkdownIt({ html: true, linkify: true, typographer: true }).enable('table');
 
-const MenuBar = ({ editor, subject }: { editor: any, subject: any }) => {
-    if (!editor) {
-        return null;
-    }
+const MarkdownEditor = ({ value, onChange, subject }: { value: string; onChange: (text: string) => void; subject: any }) => {
+    const handleChange = useCallback(({ text }: { text: string }) => {
+        onChange(text);
+    }, [onChange]);
 
-    const textTypes = [
-        { label: 'Normal', value: 'paragraph', active: () => editor.isActive('paragraph') },
-        { label: 'Heading 1', value: 'h1', active: () => editor.isActive('heading', { level: 1 }) },
-        { label: 'Heading 2', value: 'h2', active: () => editor.isActive('heading', { level: 2 }) },
-        { label: 'Heading 3', value: 'h3', active: () => editor.isActive('heading', { level: 3 }) },
-        { label: 'Heading 4', value: 'h4', active: () => editor.isActive('heading', { level: 4 }) },
-    ];
-
-    const fontSizes = ['12px', '14px', '16px', '18px', '20px', '24px', '30px', '36px'];
-
-    const [uploading, setUploading] = useState(false);
-    const [progress, setProgress] = useState(0);
-
-    const getCurrentFontSize = () => {
-        const attrs = editor.getAttributes('textStyle');
-        return attrs.fontSize || '16px';
+    const handleImageUpload = async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append("subject", subject?.name || "General");
+        formData.append("type", "image");
+        formData.append("file", file);
+        const res = await api.post("/upload", formData, { headers: { "Content-Type": "multipart/form-data" } });
+        return res.data.url;
     };
 
     return (
-        <div className="flex flex-wrap items-center gap-1 p-2 bg-white/5 border-b border-white/5 overflow-x-auto">
-            <div className="relative group">
-                <select 
-                    className="bg-white/10 text-gray-300 text-xs rounded-lg px-2 py-1.5 outline-none border border-transparent hover:border-white/20 transition-all cursor-pointer appearance-none pr-6 min-w-[100px]"
-                    value={textTypes.find(t => t.active())?.value || 'paragraph'}
-                    onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === 'paragraph') editor.chain().focus().setParagraph().run();
-                        else editor.chain().focus().toggleHeading({ level: parseInt(val.replace('h', '')) as any }).run();
-                    }}
-                >
-                    {textTypes.map(t => (
-                        <option key={t.value} value={t.value} className="bg-gray-900">{t.label}</option>
-                    ))}
-                </select>
-                <ChevronRight className="absolute right-1 top-1/2 -translate-y-1/2 rotate-90 text-gray-500 pointer-events-none" size={14} />
-            </div>
-
-            <div className="relative group ml-1">
-                <select 
-                    className="bg-white/10 text-gray-300 text-xs rounded-lg px-2 py-1.5 outline-none border border-transparent hover:border-white/20 transition-all cursor-pointer appearance-none pr-6 min-w-[70px]"
-                    value={getCurrentFontSize()}
-                    onChange={(e) => {
-                        editor.chain().focus().setFontSize(e.target.value).run();
-                    }}
-                >
-                    {fontSizes.map(size => (
-                        <option key={size} value={size} className="bg-gray-900">{size}</option>
-                    ))}
-                </select>
-                <ChevronRight className="absolute right-1 top-1/2 -translate-y-1/2 rotate-90 text-gray-500 pointer-events-none" size={14} />
-            </div>
-
-            <div className="w-px h-6 bg-white/10 mx-1 hidden sm:block" />
-
-            <button
-                type="button"
-                onClick={() => editor.chain().focus().toggleBold().run()}
-                className={`p-2 rounded-lg transition-colors ${editor.isActive('bold') ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-            >
-                <Bold size={16} />
-            </button>
-            <button
-                type="button"
-                onClick={() => editor.chain().focus().toggleItalic().run()}
-                className={`p-2 rounded-lg transition-colors ${editor.isActive('italic') ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-            >
-                <Italic size={16} />
-            </button>
-            
-            <div className="w-px h-6 bg-white/10 mx-1 hidden sm:block" />
-
-            <button
-                type="button"
-                onClick={() => editor.chain().focus().toggleBulletList().run()}
-                className={`p-2 rounded-lg transition-colors ${editor.isActive('bulletList') ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-            >
-                <List size={16} />
-            </button>
-            <button
-                type="button"
-                disabled={uploading}
-                onClick={() => {
-                    const fileInput = document.createElement('input');
-                    fileInput.type = 'file';
-                    fileInput.accept = 'image/*,.pdf,.doc,.docx,.txt,.md';
-                    fileInput.onchange = async (e: any) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        
-                        setUploading(true);
-                        setProgress(0);
-                        
-                        try {
-                            const formData = new FormData();
-                            // Append metadata BEFORE file for Cloudinary folder logic
-                            formData.append("subject", subject?.name || "General");
-                            formData.append("type", file.type.startsWith('image/') ? 'image' : 
-                                            file.type === 'application/pdf' ? 'pdf' : 'other');
-                            formData.append("file", file);
-                            
-                            const res = await api.post("/upload", formData, {
-                                headers: { "Content-Type": "multipart/form-data" },
-                                onUploadProgress: (progressEvent) => {
-                                    const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || progressEvent.loaded));
-                                    setProgress(percentCompleted);
-                                }
-                            });
-                            
-                            const format = res.data.format || "";
-                            const url = res.data.url;
-                            
-                            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(format.toLowerCase())) {
-                                editor.chain().focus().setImage({ src: url }).run();
-                            } else {
-                                editor.chain().focus().setLink({ href: url }).insertContent(res.data.filename).run();
-                            }
-                        } catch (err: any) {
-                            console.error("Upload error:", err);
-                            const errorMsg = err.response?.data?.details || err.response?.data?.error || err.message || "Unknown error";
-                            alert("Failed to upload file: " + errorMsg);
-                        } finally {
-                            setUploading(false);
-                            setProgress(0);
-                        }
-                    };
-                    fileInput.click();
+        <div className="md-editor-dark">
+            <MdEditor
+                value={value}
+                style={{ height: '350px', border: 'none' }}
+                renderHTML={(text) => mdParser.render(text)}
+                onChange={handleChange}
+                onImageUpload={handleImageUpload}
+                placeholder="Write study content here... Supports **bold**, *italic*, tables (| Col | Col |), lists, code blocks and more."
+                config={{
+                    view: { menu: true, md: true, html: true },
+                    canView: { menu: true, md: true, html: true, fullScreen: true, hideMenu: true },
+                    table: { maxRow: 20, maxCol: 10 },
                 }}
-                className={`p-2 rounded-lg transition-colors ${uploading ? 'bg-primary/20 text-primary animate-pulse' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-                title="Attach Image or Document"
-            >
-                <Paperclip size={16} />
-            </button>
-
-            {uploading && (
-                <div className="absolute inset-x-0 -bottom-1 h-1 bg-white/5 overflow-hidden rounded-full">
-                    <div 
-                        className="h-full bg-primary transition-all duration-300 shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]" 
-                        style={{ width: `${progress}%` }} 
-                    />
-                </div>
-            )}
-        </div>
-    );
-};
-
-const TiptapEditor = ({ content, onChange, subject }: { content: string, onChange: (html: string) => void, subject: any }) => {
-    const editor = useEditor({
-        extensions: [
-            StarterKit,
-            Placeholder.configure({
-                placeholder: 'Write the study content here...',
-                emptyEditorClass: 'is-editor-empty',
-            }),
-            TextStyle,
-            FontSize,
-            Image.configure({
-                inline: true,
-                allowBase64: true,
-            }),
-            TiptapLink.configure({
-                openOnClick: false,
-                HTMLAttributes: {
-                    class: 'text-primary underline cursor-pointer',
-                },
-            }),
-        ],
-        content: content,
-        onUpdate: ({ editor }) => {
-            onChange(editor.getHTML());
-        },
-        immediatelyRender: false,
-    });
-
-    useEffect(() => {
-        if (editor && content !== editor.getHTML()) {
-            const isSameContent = editor.getHTML() === content || editor.getText() === content;
-            if (!isSameContent) {
-                editor.commands.setContent(content);
-            }
-        }
-    }, [content, editor]);
-
-    return (
-        <div className="flex flex-col h-full tiptap-container [&_.ProseMirror]:min-h-[300px] [&_.ProseMirror]:p-6 [&_.ProseMirror]:outline-none [&_.ProseMirror]:text-white [&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.ProseMirror_p.is-editor-empty:first-child::before]:text-gray-500 [&_.ProseMirror_p.is-editor-empty:first-child::before]:float-left [&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none [&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0 [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:ml-6 [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:ml-6 [&_.ProseMirror_h1]:text-3xl [&_.ProseMirror_h1]:font-bold [&_.ProseMirror_h1]:mb-4 [&_.ProseMirror_h2]:text-2xl [&_.ProseMirror_h2]:font-bold [&_.ProseMirror_h2]:mb-3 [&_.ProseMirror_h3]:text-xl [&_.ProseMirror_h3]:font-bold [&_.ProseMirror_h3]:mb-2 [&_.ProseMirror_h4]:text-lg [&_.ProseMirror_h4]:font-bold [&_.ProseMirror_h4]:mb-2">
-            <MenuBar editor={editor} subject={subject} />
-            <EditorContent editor={editor} className="flex-1 cursor-text" onClick={() => editor?.commands.focus()} />
+            />
         </div>
     );
 };
@@ -658,13 +441,13 @@ export default function ChaptersPage() {
 
                           <div className="space-y-2">
                               <label className="text-xs font-black text-gray-500 uppercase ml-1">Material Content (Rich Text / Markdown support)</label>
-                              <div className="bg-[#1B2838] border border-white/10 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-primary/50 transition-all">
-                                  <TiptapEditor 
-                                      content={newMaterialContent} 
-                                      onChange={(html) => setNewMaterialContent(html)} 
-                                      subject={subject}
-                                  />
-                              </div>
+                              <div className="rounded-2xl overflow-hidden border border-white/10 focus-within:ring-2 focus-within:ring-primary/50 transition-all">
+                                   <MarkdownEditor 
+                                       value={newMaterialContent} 
+                                       onChange={setNewMaterialContent} 
+                                       subject={subject}
+                                   />
+                               </div>
                           </div>
                       </div>
                   )}
@@ -998,9 +781,9 @@ export default function ChaptersPage() {
 
                     <div className="space-y-2">
                         <label className="text-xs font-black text-gray-500 uppercase ml-1">Content (Rich Text)</label>
-                        <div className="bg-white/5 border border-white/5 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-primary/50 transition-all">
-                            <TiptapEditor 
-                                content={materialForm.content} 
+                        <div className="rounded-2xl overflow-hidden border border-white/5 focus-within:ring-2 focus-within:ring-primary/50 transition-all">
+                            <MarkdownEditor 
+                                value={materialForm.content} 
                                 onChange={(html) => setMaterialForm({ ...materialForm, content: html })} 
                                 subject={subject}
                             />
