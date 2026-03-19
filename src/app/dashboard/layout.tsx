@@ -12,13 +12,13 @@ import {
   ChevronDown,
   Menu,
   Search,
-  Bell,
   MessageSquare,
   Database,
   Newspaper
 } from "lucide-react";
 import api from "@/lib/api";
 import Link from "next/link";
+import NoticeDropdown from "@/components/NoticeDropdown";
 
 
 export default function DashboardLayout({
@@ -140,7 +140,9 @@ export default function DashboardLayout({
               )}
 
               <ul className="flex items-center gap-2 2xsm:gap-4 ml-2">
-                <HeaderIcon icon={<Bell size={20} />} hasNotification />
+                <li>
+                  <NoticeDropdown />
+                </li>
                 <HeaderIcon icon={<MessageSquare size={20} />} />
               </ul>
 

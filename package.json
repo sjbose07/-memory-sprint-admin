@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 4000 -H 127.0.0.1",
+    "dev": "next dev -p 6020 -H 127.0.0.1",
     "build": "next build",
-    "start": "next start -p 4000 -H 127.0.0.1",
+    "start": "next start -p 6020 -H 127.0.0.1",
     "lint": "next lint"
   },
   "dependencies": {
@@ -13,6 +13,7 @@
     "@types/markdown-it": "^14.1.2",
     "axios": "^1.6.8",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "emoji-picker-react": "^4.18.0",
     "lucide-react": "^0.378.0",
     "markdown-it": "^14.1.1",
