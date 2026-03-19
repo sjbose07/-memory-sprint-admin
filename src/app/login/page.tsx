@@ -111,22 +111,6 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-8 pt-6 border-t border-white/5 space-y-4">
-          <button
-            onClick={async () => {
-              try {
-                const start = Date.now();
-                const res = await api.get("/health");
-                const latency = Date.now() - start;
-                alert(`✅ Connection Successful!\nBackend is alive at: ${api.defaults.baseURL}\nLatency: ${latency}ms\nStatus: ${res.data.status}`);
-              } catch (err: any) {
-                alert(`❌ Connection Failed!\nBackend: ${api.defaults.baseURL}\nError: ${err.message}\nCheck if Hugging Face Space is 'Running'.`);
-              }
-            }}
-            className="w-full bg-[#0D1B2A] hover:bg-[#1a222c] text-primary text-xs font-bold py-3 rounded-xl border border-primary/20 transition-all uppercase tracking-widest"
-          >
-            Test Backend Connection
-          </button>
-
           <p className="text-[10px] text-gray-500 text-center leading-relaxed">
             Note: Admin signup is disabled for security. <br />
             Contact the system administrator to create a new admin account.
