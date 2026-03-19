@@ -14,7 +14,9 @@ import {
   Search,
   MessageSquare,
   Database,
-  Newspaper
+  Newspaper,
+  ShieldCheck,
+  Settings
 } from "lucide-react";
 import api from "@/lib/api";
 import Link from "next/link";
@@ -90,6 +92,7 @@ export default function DashboardLayout({
                 <NavItem href="/dashboard/current-affairs" icon={<Newspaper size={18} />} label="Current Affairs" active={pathname.startsWith("/dashboard/current-affairs")} />
                 <NavItem href="/dashboard/questions" icon={<FileQuestion size={18} />} label="Question Bank" active={pathname.startsWith("/dashboard/questions")} />
                 <NavItem href="/dashboard/tests" icon={<Trophy size={18} />} label="Test Factory" active={pathname.startsWith("/dashboard/tests")} />
+                <NavItem href="/dashboard/settings" icon={<Settings size={18} />} label="Security Settings" active={pathname === "/dashboard/settings"} />
               </ul>
             </div>
           </nav>
