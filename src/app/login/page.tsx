@@ -43,7 +43,7 @@ export default function LoginPage() {
         setError(`${err.response.data?.error || "Invalid Credentials"} (Status: ${err.response.status})`);
       } else if (err.request) {
         // The request was made but no response was received
-        setError("No response from server. Check Hugging Face Space status or CORS.");
+        setError("No response from server. Check server status");
       } else {
         // Something happened in setting up the request that triggered an Error
         setError(`Request error: ${err.message}`);

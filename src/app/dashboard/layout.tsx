@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
   Users,
@@ -16,7 +16,8 @@ import {
   Database,
   Newspaper,
   ShieldCheck,
-  Settings
+  Settings,
+  User as UserIcon,
 } from "lucide-react";
 import api from "@/lib/api";
 import Link from "next/link";
@@ -30,7 +31,9 @@ export default function DashboardLayout({
 }) {
   const [user, setUser] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [storage, setStorage] = useState<string>("Loading...");
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -55,6 +58,16 @@ export default function DashboardLayout({
         .catch(() => setStorage("Error"));
     }
   }, [router]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
 
   const handleLogout = () => {
@@ -150,15 +163,57 @@ export default function DashboardLayout({
               </ul>
 
               {/* User Menu */}
-              <div className="flex items-center gap-4 cursor-pointer group ml-4">
-                <span className="hidden text-right lg:block">
-                  <span className="block text-sm font-medium text-title-text">{user.name}</span>
-                  <span className="block text-[10px] text-body-text uppercase font-bold tracking-widest">{user.role}</span>
-                </span>
-                <span className="h-11 w-11 rounded-full overflow-hidden border border-stroke">
-                  <img src={user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`} alt="User" />
-                </span>
-                <ChevronDown size={16} className="text-body-text group-hover:text-primary transition-colors" />
+              <div ref={dropdownRef} className="relative ml-4">
+                <div 
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-4 cursor-pointer group"
+                >
+                  <span className="hidden text-right lg:block">
+                    <span className="block text-sm font-medium text-title-text">{user.name}</span>
+                    <span className="block text-[10px] text-body-text uppercase font-bold tracking-widest">{user.role}</span>
+                  </span>
+                  <span className="h-11 w-11 rounded-full overflow-hidden border border-stroke">
+                    <img src={user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`} alt="User" />
+                  </span>
+                  <ChevronDown size={16} className={`text-body-text group-hover:text-primary transition-all ${dropdownOpen ? 'rotate-180' : ''}`} />
+                </div>
+
+                {/* Dropdown Menu */}
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-5.5 flex w-66 flex-col rounded-2xl border border-stroke bg-card shadow-2xl overflow-hidden backdrop-blur-sm">
+                    <ul className="flex flex-col gap-1 border-b border-stroke p-3">
+                      <li>
+                        <Link
+                          href="/dashboard/settings"
+                          className="flex items-center gap-3.5 text-sm font-semibold duration-300 ease-in-out hover:text-primary lg:text-base p-2.5 rounded-xl hover:bg-stroke/50"
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          <Settings size={20} className="text-secondary" />
+                          Security Settings
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/dashboard/users"
+                          className="flex items-center gap-3.5 text-sm font-semibold duration-300 ease-in-out hover:text-primary lg:text-base p-2.5 rounded-xl hover:bg-stroke/50"
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          <Users size={20} className="text-secondary" />
+                          User Management
+                        </Link>
+                      </li>
+                    </ul>
+                    <div className="p-3">
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3.5 text-sm font-semibold duration-300 ease-in-out hover:text-red-500 lg:text-base p-2.5 rounded-xl hover:bg-red-500/10 w-full text-left"
+                      >
+                        <LogOut size={20} />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

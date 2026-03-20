@@ -13,7 +13,9 @@ import {
   Calendar,
   Plus,
   X,
-  Loader2
+  Loader2,
+  ShieldAlert,
+  Key
 } from "lucide-react";
 
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
@@ -79,7 +81,7 @@ export default function UsersPage() {
     e.preventDefault();
     setAdding(true);
     try {
-      await api.post("/auth/register", newUser);
+      await api.post("/users", newUser);
       setAddModalOpen(false);
       setNewUser({ name: "", email: "", password: "", role: "user" });
       fetchUsers();
@@ -89,6 +91,34 @@ export default function UsersPage() {
       setAdding(false);
     }
   };
+
+  const handleTriggerReset = async (id: string, email: string) => {
+    if (!confirm(`Send password reset email to ${email}?`)) return;
+    try {
+      await api.post(`/users/${id}/reset-password`);
+      alert(`Reset link sent to ${email}`);
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Failed to send reset email");
+    }
+  };
+
+  const getPasswordStrength = (pass: string) => {
+    if (!pass) return { score: 0, label: "", color: "" };
+    let score = 0;
+    if (pass.length >= 8) score++;
+    if (/[A-Z]/.test(pass)) score++;
+    if (/[a-z]/.test(pass)) score++;
+    if (/[0-9]/.test(pass)) score++;
+    if (/[^A-Za-z0-0]/.test(pass)) score++;
+
+    const labels = ["Very Weak", "Weak", "Fair", "Good", "Strong"];
+    const colors = ["bg-red-500", "bg-red-400", "bg-yellow-500", "bg-blue-500", "bg-green-500"];
+    
+    return { score, label: labels[score - 1] || "Very Weak", color: colors[score - 1] || "bg-red-500" };
+  };
+
+  const strength = getPasswordStrength(newUser.password);
+  const isPasswordSecure = strength.score >= 5;
 
 
   const filteredUsers = users.filter(u =>
@@ -185,6 +215,13 @@ export default function UsersPage() {
                 <td className="p-6 text-right">
                   <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
                     <button
+                      onClick={() => handleTriggerReset(u.id, u.email)}
+                      className="p-2 hover:bg-primary/10 text-gray-500 hover:text-primary rounded-lg transition-all"
+                      title="Send Reset Password Email"
+                    >
+                      <Key size={18} />
+                    </button>
+                    <button
                       onClick={() => setDeleteModal({ isOpen: true, id: u.id, name: u.name })}
                       className="p-2 hover:bg-red-500/10 text-gray-500 hover:text-red-500 rounded-lg transition-all"
                       title="Delete User"
@@ -257,9 +294,23 @@ export default function UsersPage() {
                     required
                     value={newUser.password}
                     onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                    className="w-full bg-[#0D1B2A] border border-white/5 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className={`w-full bg-[#0D1B2A] border rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 ${newUser.password && !isPasswordSecure ? 'border-yellow-500/50' : 'border-white/5'}`}
                     placeholder="••••••••"
                   />
+                  {newUser.password && (
+                    <div className="px-1 space-y-2">
+                       <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-tighter">
+                         <span className="text-gray-500">Strength: <span className={strength.color.replace('bg-', 'text-')}>{strength.label}</span></span>
+                         <span className="text-gray-500">{strength.score}/5</span>
+                       </div>
+                       <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                         <div className={`h-full transition-all duration-500 ${strength.color}`} style={{ width: `${(strength.score / 5) * 100}%` }}></div>
+                       </div>
+                       {!isPasswordSecure && (
+                         <p className="text-[10px] text-yellow-500 font-medium">Require: 8+ chars, Uppercase, Lowercase, Number, Special</p>
+                       )}
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Role</label>
@@ -285,8 +336,8 @@ export default function UsersPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={adding}
-                  className="flex-1 bg-primary hover:bg-primary/90 text-dark font-bold py-4 rounded-2xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+                  disabled={adding || (newUser.password !== "" && !isPasswordSecure)}
+                  className="flex-1 bg-primary hover:bg-primary/90 disabled:bg-primary/50 text-dark font-bold py-4 rounded-2xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
                 >
                   {adding ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
                   Add User
