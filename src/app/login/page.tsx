@@ -82,12 +82,7 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <div className="flex justify-between items-center ml-1">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Password</label>
-              <Link href="/forgot-password" title="Forgot Password" icon-name="ExternalLink" className="text-[10px] font-bold text-primary hover:underline uppercase tracking-tight">
-                Forgot Password?
-              </Link>
-            </div>
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Password</label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
               <input
@@ -98,6 +93,11 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 required
               />
+            </div>
+            <div className="flex justify-end pt-1 pr-1">
+              <Link href="/forgot-password" title="Forgot Password" icon-name="ExternalLink" className="text-[12px] font-bold text-primary hover:underline uppercase tracking-tight">
+                Forgot Password?
+              </Link>
             </div>
           </div>
 
