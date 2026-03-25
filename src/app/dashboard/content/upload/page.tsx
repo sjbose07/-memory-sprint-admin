@@ -14,6 +14,7 @@ import {
   Trash2
 } from "lucide-react";
 import Link from "next/link";
+import AIAssistPanel from "@/components/AIAssistPanel";
 
 export default function UploadPage() {
   const searchParams = useSearchParams();
@@ -25,10 +26,8 @@ export default function UploadPage() {
 
   const typeParam = searchParams.get("type") as "mcq" | "oneliner" | null;
 
-  const [mode, setMode] = useState<"paste" | "file" | "ai">("paste");
   const [questionType, setQuestionType] = useState<"mcq" | "oneliner">(typeParam === "oneliner" ? "oneliner" : "mcq");
   const [content, setContent] = useState("");
-  const [language, setLanguage] = useState("English");
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<any[]>([]);
   const [message, setMessage] = useState<{ type: "success" | "error", text: string } | null>(null);
@@ -74,27 +73,6 @@ export default function UploadPage() {
     }
   };
 
-  const handleAiGenerate = async () => {
-    setLoading(true);
-    setMessage(null);
-    try {
-      const res = await api.post("/ai/generate", {
-        chapter_id: chapterId,
-        current_affair_id: caId,
-        text: content,
-        count: 10,
-        language
-      });
-      // In your backend, this usually returns a success message or the questions
-      setMessage({ type: "success", text: "AI Generation successful! Check the question bank." });
-      setContent("");
-    } catch (err) {
-      setMessage({ type: "error", text: "AI Generation failed. Ensure Gemini API key is set in backend." });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-20">
       <Link href={caId ? "/dashboard/current-affairs" : `/dashboard/content/${chapterId}`} className="flex items-center gap-2 text-gray-400 hover:text-primary transition-colors font-bold group w-fit">
@@ -112,14 +90,6 @@ export default function UploadPage() {
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-[#1B2838] rounded-[2rem] p-8 border border-white/5 shadow-2xl">
             <div className="flex flex-wrap gap-6 mb-8 items-end">
-              <div className="space-y-3">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1 block">Upload Mode</label>
-                <div className="flex gap-2 p-1 bg-[#0D1B2A] rounded-2xl w-fit border border-white/5">
-                  <TabButton active={mode === "paste"} onClick={() => setMode("paste")} icon={<FileText size={18} />} label="Manual Paste" />
-                  <TabButton active={mode === "ai"} onClick={() => setMode("ai")} icon={<Zap size={18} />} label="AI Magic" />
-                </div>
-              </div>
-
               <div className="space-y-3">
                 <label className="text-xs font-bold text-gray-500 uppercase ml-1 block">Question Type</label>
                 <div className="relative">
@@ -145,53 +115,31 @@ export default function UploadPage() {
               </div>
             </div>
 
-            {mode === "ai" && (
-              <div className="mb-4">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1 block mb-2">Target Language</label>
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="w-full bg-[#0D1B2A] border border-white/10 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary/50 outline-none font-medium"
-                >
-                  <option value="English">English</option>
-                  <option value="Hindi">Hindi (हिंदी)</option>
-                  <option value="Bengali">Bengali (বাংলা)</option>
-                  <option value="Telugu">Telugu (తెలుగు)</option>
-                  <option value="Marathi">Marathi (मराठी)</option>
-                  <option value="Tamil">Tamil (தமிழ்)</option>
-                  <option value="Spanish">Spanish (Español)</option>
-                </select>
-              </div>
-            )}
+            <AIAssistPanel 
+              mode={questionType}
+              onOutput={(text) => setContent(prev => prev ? prev + '\n\n' + text : text)}
+            />
+
+
 
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder={mode === "paste" ? "Question text...\nA. Option A  B. Option B...\nANSWER: A" : "Paste your study notes or a paragraph here. AI will extract 10 questions from it."}
-              className={`w-full ${mode === 'ai' ? 'h-60' : 'h-80'} bg-[#0D1B2A] border border-white/10 rounded-2xl p-6 text-white focus:ring-2 focus:ring-primary/50 outline-none resize-none font-mono text-sm leading-relaxed`}
+              placeholder={"Question text...\nA. Option A  B. Option B...\nANSWER: A"}
+              className={`w-full h-80 bg-[#0D1B2A] border border-white/10 rounded-2xl p-6 text-white focus:ring-2 focus:ring-primary/50 outline-none resize-none font-mono text-sm leading-relaxed`}
             />
 
             <div className="mt-6 flex justify-between items-center">
               <div className="text-xs text-gray-500 font-bold uppercase tracking-widest">
                 {content.length} characters entered
               </div>
-              {mode === "paste" ? (
-                <button
-                  onClick={handlePreview}
-                  disabled={loading || !content.trim()}
-                  className="bg-primary text-dark font-black px-10 py-4 rounded-xl hover:scale-105 transition-all disabled:opacity-50"
-                >
-                  {loading ? <Loader2 className="animate-spin" /> : "Process & Preview"}
-                </button>
-              ) : (
-                <button
-                  onClick={handleAiGenerate}
-                  disabled={loading || !content.trim()}
-                  className="bg-secondary text-white font-black px-10 py-4 rounded-xl hover:scale-105 transition-all disabled:opacity-50 flex items-center gap-2"
-                >
-                  {loading ? <Loader2 className="animate-spin" /> : <><Zap size={18} /> Generate with AI</>}
-                </button>
-              )}
+              <button
+                onClick={handlePreview}
+                disabled={loading || !content.trim()}
+                className="bg-primary text-dark font-black px-10 py-4 rounded-xl hover:scale-105 transition-all disabled:opacity-50"
+              >
+                {loading ? <Loader2 className="animate-spin" /> : "Process & Preview"}
+              </button>
             </div>
           </div>
 
@@ -258,14 +206,4 @@ export default function UploadPage() {
   );
 }
 
-function TabButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: any, label: string }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${active ? 'bg-primary text-dark' : 'text-gray-500 hover:text-white'}`}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
+

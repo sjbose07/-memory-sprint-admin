@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import api from "@/lib/api";
 import {
   Plus,
@@ -10,15 +11,27 @@ import {
   Trash2,
   Edit3,
   Layers,
-  FileText
+  FileText,
+  Search,
+  Filter
 } from "lucide-react";
 import Link from "next/link";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 
 export default function ContentPage() {
+  return (
+    <Suspense fallback={<div className="p-20 text-center text-gray-500 animate-pulse font-bold tracking-widest uppercase">Initializing...</div>}>
+      <ContentBody />
+    </Suspense>
+  );
+}
+
+function ContentBody() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddSubject, setShowAddSubject] = useState(false);
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [newSubjectName, setNewSubjectName] = useState("");
   const [newSubjectDesc, setNewSubjectDesc] = useState("");
 
@@ -45,6 +58,11 @@ export default function ContentPage() {
   useEffect(() => {
     fetchSubjects();
   }, []);
+
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) setSearchQuery(q);
+  }, [searchParams]);
 
   const handleCreateSubject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,6 +104,11 @@ export default function ContentPage() {
       alert("Failed to update subject");
     }
   };
+
+  const filteredSubjects = subjects.filter(sub => 
+    sub.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (sub.description && sub.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   return (
     <div className="space-y-10">
@@ -146,10 +169,24 @@ export default function ContentPage() {
         </div>
       )}
 
+      {/* Toolbar */}
+      <div className="flex bg-[#1B2838] p-4 rounded-2xl border border-white/5 items-center gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
+          <input
+            type="text"
+            placeholder="Search subjects by name or description..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-[#0D1B2A] border border-white/5 rounded-xl py-3 pl-12 pr-4 text-white focus:ring-2 focus:ring-primary/50 outline-none"
+          />
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         {loading ? (
           <p className="col-span-full text-center py-20 text-gray-500 animate-pulse font-bold tracking-widest uppercase">Fetching Subject Data...</p>
-        ) : subjects.map((sub) => (
+        ) : filteredSubjects.map((sub) => (
           <div key={sub.id} className="group relative bg-[#1B2838] rounded-[2rem] p-8 border border-white/5 hover:border-primary/40 transition-all duration-500 shadow-xl overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-[4rem] group-hover:bg-primary/10 transition-colors flex items-start justify-end p-6">
               <Book className="text-primary/20 group-hover:text-primary/40 transition-all" size={32} />

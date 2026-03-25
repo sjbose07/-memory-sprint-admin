@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import api from "@/lib/api";
 import {
     Plus,
@@ -16,10 +17,13 @@ import {
     Upload,
     Eye,
     MessageSquare,
+    Sparkles,
+    Loader2
 } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
+import AIAssistPanel from "@/components/AIAssistPanel";
 import MdEditor from 'react-markdown-editor-lite';
 import MarkdownIt from 'markdown-it';
 import 'react-markdown-editor-lite/lib/index.css';
@@ -83,10 +87,19 @@ const PREDEFINED_CATEGORIES = [
 ];
 
 export default function CurrentAffairsPage() {
+    return (
+        <Suspense fallback={<div className="p-20 text-center animate-pulse font-bold text-gray-500 uppercase tracking-widest">Initializing...</div>}>
+            <CurrentAffairsContent />
+        </Suspense>
+    );
+}
+
+function CurrentAffairsContent() {
     const [caList, setCaList] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
-    const [searchQuery, setSearchQuery] = useState("");
+    const searchParams = useSearchParams();
+    const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
     const [filterYear, setFilterYear] = useState<number | "">("");
     const [filterMonth, setFilterMonth] = useState<number | "">("");
     const [filterTopic, setFilterTopic] = useState("");
@@ -129,6 +142,11 @@ export default function CurrentAffairsPage() {
     useEffect(() => {
         fetchCA();
     }, []);
+
+    useEffect(() => {
+        const q = searchParams.get("q");
+        if (q) setSearchQuery(q);
+    }, [searchParams]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -394,13 +412,13 @@ export default function CurrentAffairsPage() {
                                             </Link>
                                         )}
                                         {activeTab === "oneliner" && (
-                                            <button
-                                                onClick={() => setViewContent(ca)}
-                                                className="w-10 h-10 bg-white/5 hover:bg-white/20 text-white rounded-xl flex items-center justify-center transition-all"
-                                                title="View Content"
+                                            <Link
+                                                href={`/dashboard/current-affairs/${ca.id}/articles?title=${encodeURIComponent(ca.title)}`}
+                                                className="w-10 h-10 bg-white/5 hover:bg-primary hover:text-dark text-white rounded-xl flex items-center justify-center transition-all"
+                                                title="Manage Articles"
                                             >
-                                                <Eye size={18} />
-                                            </button>
+                                                <Newspaper size={18} />
+                                            </Link>
                                         )}
                                         <button
                                             onClick={() => handleEditClick(ca)}
@@ -497,40 +515,6 @@ export default function CurrentAffairsPage() {
                                 </div>
                             </div>
 
-                            <div className="space-y-2 relative">
-                                <div className="flex justify-between items-center ml-1">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">Content (Rich Text Supported)</label>
-                                    <button 
-                                        type="button" 
-                                        onClick={() => setShowEmojiPicker(!showEmojiPicker)} 
-                                        className="text-lg bg-white/5 hover:bg-white/10 p-1.5 rounded-lg transition-colors border border-white/5 leading-none"
-                                        title="Insert Emoji"
-                                    >
-                                        😊
-                                    </button>
-                                </div>
-                                
-                                {showEmojiPicker && (
-                                    <div className="absolute top-10 right-0 z-[100] shadow-2xl">
-                                        <EmojiPicker 
-                                            // @ts-ignore
-                                            theme="dark"
-                                            onEmojiClick={(emojiData: any) => {
-                                                setFormData(prev => ({ ...prev, content: prev.content + emojiData.emoji }));
-                                                setShowEmojiPicker(false);
-                                            }} 
-                                        />
-                                    </div>
-                                )}
-
-                                <div className="rounded-xl overflow-hidden border border-white/10 focus-within:ring-2 focus-within:ring-primary/50 transition-all">
-                                    <MarkdownEditor
-                                        value={formData.content}
-                                        onChange={(content) => setFormData({ ...formData, content })}
-                                    />
-                                </div>
-                            </div>
-
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-gray-500 uppercase ml-1">Topic / Category</label>
@@ -557,18 +541,6 @@ export default function CurrentAffairsPage() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-3 bg-[#0D1B2A] p-4 rounded-xl border border-white/5">
-                                <input
-                                    type="checkbox"
-                                    id="is_practice"
-                                    checked={formData.is_practice_enabled}
-                                    onChange={(e) => setFormData({ ...formData, is_practice_enabled: e.target.checked })}
-                                    className="w-5 h-5 accent-secondary"
-                                />
-                                <label htmlFor="is_practice" className="font-bold text-sm text-gray-300 cursor-pointer">
-                                    Enable Practice Mode for this Entry
-                                </label>
-                            </div>
 
                             <div className="flex gap-4 pt-4">
                                 <button

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import GlobalSearch from "@/components/GlobalSearch";
 import {
   Users,
   BookOpen,
@@ -34,6 +35,7 @@ export default function DashboardLayout({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [storage, setStorage] = useState<string>("Loading...");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -45,8 +47,30 @@ export default function DashboardLayout({
       router.push("/login");
       return;
     }
+    
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
+
+    // Validate token with backend
+    api.get("/auth/me")
+      .then(res => {
+        if (res.data.role !== 'admin') {
+           // Not an admin anymore
+           localStorage.clear();
+           router.push("/login");
+        } else {
+           setUser(res.data);
+           localStorage.setItem("user", JSON.stringify(res.data));
+        }
+      })
+      .catch((err) => {
+        console.error("Auth validation failed", err);
+        // If it's a 401 or 403, the token is invalid/expired
+        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+           localStorage.clear();
+           router.push("/login");
+        }
+      });
 
     // Fetch DB Storage if admin
     if (parsedUser.role === 'admin') {
@@ -133,17 +157,8 @@ export default function DashboardLayout({
               </button>
             </div>
 
-            <div className="hidden sm:block">
-              <div className="relative">
-                <button className="absolute left-0 top-1/2 -translate-y-1/2">
-                  <Search size={20} className="text-body-text hover:text-primary" />
-                </button>
-                <input
-                  type="text"
-                  placeholder="Type to search..."
-                  className="w-full bg-transparent pl-9 pr-4 font-medium focus:outline-none xl:w-125 text-title-text"
-                />
-              </div>
+            <div className="hidden sm:block" ref={searchRef}>
+              <GlobalSearch />
             </div>
 
             <div className="flex items-center gap-3 2xsm:gap-7">

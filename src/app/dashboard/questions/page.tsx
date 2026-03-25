@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import api from "@/lib/api";
 import {
     FileQuestion,
@@ -17,9 +18,18 @@ import {
 import Link from "next/link";
 
 export default function QuestionsPage() {
+    return (
+        <Suspense fallback={<div className="bg-[#1B2838] rounded-[2rem] p-32 border border-white/5 text-center text-gray-500 font-black italic tracking-widest animate-pulse text-xl">MINING DATA...</div>}>
+            <QuestionsContent />
+        </Suspense>
+    );
+}
+
+function QuestionsContent() {
     const [questions, setQuestions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState("");
+    const searchParams = useSearchParams();
+    const [searchTerm, setSearchTerm] = useState(searchParams.get("q") || "");
     const [filterSubject, setFilterSubject] = useState("");
     const [filterChapter, setFilterChapter] = useState("");
     const [showFilters, setShowFilters] = useState(false);
@@ -39,6 +49,11 @@ export default function QuestionsPage() {
     useEffect(() => {
         fetchQuestions();
     }, []);
+
+    useEffect(() => {
+        const q = searchParams.get("q");
+        if (q) setSearchTerm(q);
+    }, [searchParams]);
 
     const handleDelete = async (id: string) => {
         if (!confirm("Are you sure you want to delete this question?")) return;

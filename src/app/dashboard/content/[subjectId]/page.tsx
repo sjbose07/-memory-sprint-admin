@@ -16,9 +16,12 @@ import {
   Eye,
   XCircle,
   MoreVertical,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
+import AIAssistPanel from "@/components/AIAssistPanel";
 import MdEditor from 'react-markdown-editor-lite';
 import MarkdownIt from 'markdown-it';
 import 'react-markdown-editor-lite/lib/index.css';
@@ -440,7 +443,13 @@ export default function ChaptersPage() {
                           </div>
 
                           <div className="space-y-2">
-                              <label className="text-xs font-black text-gray-500 uppercase ml-1">Material Content (Rich Text / Markdown support)</label>
+                              <div className="flex justify-between items-center ml-1">
+                                  <label className="text-xs font-black text-gray-500 uppercase">Material Content (Rich Text / Markdown support)</label>
+                              </div>
+                              <AIAssistPanel 
+                                  mode="oneliner" 
+                                  onOutput={setNewMaterialContent} 
+                              />
                               <div className="rounded-2xl overflow-hidden border border-white/10 focus-within:ring-2 focus-within:ring-primary/50 transition-all">
                                    <MarkdownEditor 
                                        value={newMaterialContent} 
@@ -780,7 +789,13 @@ export default function ChaptersPage() {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-xs font-black text-gray-500 uppercase ml-1">Content (Rich Text)</label>
+                        <div className="flex justify-between items-center ml-1">
+                            <label className="text-xs font-black text-gray-500 uppercase">Content (Rich Text)</label>
+                        </div>
+                        <AIAssistPanel 
+                            mode="oneliner" 
+                            onOutput={(html) => setMaterialForm({ ...materialForm, content: html })} 
+                        />
                         <div className="rounded-2xl overflow-hidden border border-white/5 focus-within:ring-2 focus-within:ring-primary/50 transition-all">
                             <MarkdownEditor 
                                 value={materialForm.content} 

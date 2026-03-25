@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import api from "@/lib/api";
 import {
   Trophy,
@@ -16,9 +17,18 @@ import {
 import Link from "next/link";
 
 export default function TestsPage() {
+  return (
+    <Suspense fallback={<div className="p-20 text-center animate-pulse text-gray-500 font-bold uppercase tracking-widest">Scanning Test Database...</div>}>
+      <TestsContent />
+    </Suspense>
+  );
+}
+
+function TestsContent() {
   const [tests, setTests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get("q") || "");
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   const fetchTests = async () => {
@@ -36,6 +46,11 @@ export default function TestsPage() {
   useEffect(() => {
     fetchTests();
   }, []);
+
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) setSearch(q);
+  }, [searchParams]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this test? This will also delete all student attempts for this test.")) return;

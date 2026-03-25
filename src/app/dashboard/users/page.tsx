@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import api from "@/lib/api";
 import {
   UserCheck,
@@ -21,9 +22,18 @@ import {
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 
 export default function UsersPage() {
+  return (
+    <Suspense fallback={<div className="p-20 text-center text-gray-500 italic">Initializing...</div>}>
+      <UsersContent />
+    </Suspense>
+  );
+}
+
+function UsersContent() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get("q") || "");
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string; name: string }>({
     isOpen: false,
     id: "",
@@ -49,6 +59,11 @@ export default function UsersPage() {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) setSearch(q);
+  }, [searchParams]);
 
   const handleApprove = async (id: string, currentStatus: boolean) => {
     try {
