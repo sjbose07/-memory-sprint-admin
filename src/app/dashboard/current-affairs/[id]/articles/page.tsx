@@ -76,7 +76,7 @@ const MarkdownEditor = ({ value, onChange }: { value: string; onChange: (text: s
                     placeholder="Write news content here... Supports **bold**, *italic*, HTML alignment, etc."
                     config={{
                         view: { menu: true, md: true, html: true },
-                        canView: { menu: true, md: true, html: true, fullScreen: true, hideMenu: true },
+                        canView: { menu: true, md: true, html: true, fullScreen: true, hideMenu: true, both: true },
                     }}
                 />
             </div>

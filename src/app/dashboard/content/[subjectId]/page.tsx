@@ -76,7 +76,7 @@ const MarkdownEditor = ({ value, onChange, subject }: { value: string; onChange:
                 placeholder="Write study content here... Supports **bold**, *italic*, HTML alignment, tables and more."
                 config={{
                     view: { menu: true, md: true, html: true },
-                    canView: { menu: true, md: true, html: true, fullScreen: true, hideMenu: true },
+                    canView: { menu: true, md: true, html: true, fullScreen: true, hideMenu: true, both: true },
                     table: { maxRow: 20, maxCol: 10 },
                 }}
             />

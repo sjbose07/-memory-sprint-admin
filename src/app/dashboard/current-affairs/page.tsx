@@ -73,14 +73,14 @@ const MarkdownEditor = ({ value, onChange }: { value: string; onChange: (text: s
             </div>
             <MdEditor
                 value={value}
-                style={{ height: '280px', border: 'none' }}
+                style={{ height: '350px', border: 'none' }}
                 renderHTML={(text) => mdParser.render(text)}
                 onChange={handleEditorChange}
                 onImageUpload={handleImageUpload}
-                placeholder="Write the detailed news content here (supports **bold**, *italic*, HTML alignment, tables...)..."
+                placeholder="Write news content... Supports **bold**, *italic*, HTML alignment, tables and more."
                 config={{
                     view: { menu: true, md: true, html: true },
-                    canView: { menu: true, md: true, html: true, fullScreen: true, hideMenu: true },
+                    canView: { menu: true, md: true, html: true, fullScreen: true, hideMenu: true, both: true },
                     table: { maxRow: 20, maxCol: 10 },
                 }}
             />
@@ -560,6 +560,23 @@ function CurrentAffairsContent() {
                                         onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                                         placeholder="tag1, tag2..."
                                         className="w-full bg-[#0D1B2A] border border-white/10 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary/50 outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between ml-1">
+                                    <label className="text-xs font-black text-gray-500 uppercase tracking-widest">Story Content</label>
+                                    <div className="text-[10px] text-primary font-bold italic animate-pulse">Rich Markdown Mode Active</div>
+                                </div>
+                                <AIAssistPanel 
+                                    mode="oneliner" 
+                                    onOutput={(text) => setFormData((prev: any) => ({ ...prev, content: text }))} 
+                                />
+                                <div className="bg-[#0D1B2A] rounded-[2rem] overflow-hidden border border-white/10 focus-within:ring-2 focus-within:ring-primary/50 transition-all">
+                                    <MarkdownEditor 
+                                        value={formData.content} 
+                                        onChange={(text) => setFormData((prev: any) => ({ ...prev, content: text }))} 
                                     />
                                 </div>
                             </div>
