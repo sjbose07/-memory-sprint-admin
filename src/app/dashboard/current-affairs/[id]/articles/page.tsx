@@ -16,7 +16,12 @@ import {
     Sparkles,
     CheckCircle2,
     Save,
-    Newspaper
+    Newspaper,
+    AlignLeft,
+    AlignCenter,
+    AlignRight,
+    AlignJustify,
+    Type
 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
@@ -32,6 +37,14 @@ const MarkdownEditor = ({ value, onChange }: { value: string; onChange: (text: s
         onChange(text);
     }, [onChange]);
 
+    const wrapAlignment = (align: string) => {
+        if (align === 'justify') {
+            onChange(`<div style="text-align: justify">\n\n${value}\n\n</div>`);
+        } else {
+            onChange(`<div align="${align}">\n\n${value}\n\n</div>`);
+        }
+    };
+
     const handleImageUpload = async (file: File): Promise<string> => {
         const formData = new FormData();
         formData.append("subject", "Current Affairs");
@@ -42,19 +55,31 @@ const MarkdownEditor = ({ value, onChange }: { value: string; onChange: (text: s
     };
 
     return (
-        <div className="md-editor-dark">
-            <MdEditor
-                value={value}
-                style={{ height: '550px', border: 'none' }}
-                renderHTML={(text) => mdParser.render(text)}
-                onChange={handleEditorChange}
-                onImageUpload={handleImageUpload}
-                placeholder="Write news content here..."
-                config={{
-                    view: { menu: true, md: true, html: true },
-                    canView: { menu: true, md: true, html: true, fullScreen: true, hideMenu: true },
-                }}
-            />
+        <div className="md-editor-dark space-y-2 flex flex-col h-full">
+            <div className="flex items-center gap-2 m-4 bg-[#1B2838] p-2 rounded-xl border border-white/5 w-fit">
+                <button type="button" onClick={() => wrapAlignment('left')} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-primary transition-all" title="Align Left"><AlignLeft size={18} /></button>
+                <button type="button" onClick={() => wrapAlignment('center')} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-primary transition-all" title="Align Center"><AlignCenter size={18} /></button>
+                <button type="button" onClick={() => wrapAlignment('right')} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-primary transition-all" title="Align Right"><AlignRight size={18} /></button>
+                <button type="button" onClick={() => wrapAlignment('justify')} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-primary transition-all" title="Justify"><AlignJustify size={18} /></button>
+                <div className="w-px h-6 bg-white/10 mx-1"></div>
+                <button type="button" onClick={() => onChange(`${value}\n\n<span style="color: #ff4757">TEXT</span>`)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-red-500 transition-all" title="Red Text"><Type size={18} className="text-[#ff4757]" /></button>
+                <button type="button" onClick={() => onChange(`${value}\n\n<span style="color: #2ed573">TEXT</span>`)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-green-500 transition-all" title="Green Text"><Type size={18} className="text-[#2ed573]" /></button>
+                <button type="button" onClick={() => onChange(`${value}\n\n<span style="font-size: 24px">LARGE TEXT</span>`)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-all font-bold" title="Large Text">A+</button>
+            </div>
+            <div className="flex-1 min-h-[500px]">
+                <MdEditor
+                    value={value}
+                    style={{ height: '100%', border: 'none' }}
+                    renderHTML={(text) => mdParser.render(text)}
+                    onChange={handleEditorChange}
+                    onImageUpload={handleImageUpload}
+                    placeholder="Write news content here... Supports **bold**, *italic*, HTML alignment, etc."
+                    config={{
+                        view: { menu: true, md: true, html: true },
+                        canView: { menu: true, md: true, html: true, fullScreen: true, hideMenu: true },
+                    }}
+                />
+            </div>
         </div>
     );
 };
@@ -97,7 +122,7 @@ function CAArticlesContent() {
             setMaterials(res.data);
             
             // Sync current editor if something was being edited
-            setEditingMaterial(prev => {
+            setEditingMaterial((prev: any) => {
                 if (!prev) return null;
                 return res.data.find((m: any) => m.id === prev.id) || prev;
             });

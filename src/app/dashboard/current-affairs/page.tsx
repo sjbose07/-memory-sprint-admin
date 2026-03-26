@@ -18,7 +18,12 @@ import {
     Eye,
     MessageSquare,
     Sparkles,
-    Loader2
+    Loader2,
+    AlignLeft,
+    AlignCenter,
+    AlignRight,
+    AlignJustify,
+    Type
 } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -37,6 +42,14 @@ const MarkdownEditor = ({ value, onChange }: { value: string; onChange: (text: s
         onChange(text);
     }, [onChange]);
 
+    const wrapAlignment = (align: string) => {
+        if (align === 'justify') {
+            onChange(`<div style="text-align: justify">\n\n${value}\n\n</div>`);
+        } else {
+            onChange(`<div align="${align}">\n\n${value}\n\n</div>`);
+        }
+    };
+
     const handleImageUpload = async (file: File): Promise<string> => {
         const formData = new FormData();
         formData.append("subject", "Current Affairs");
@@ -47,14 +60,24 @@ const MarkdownEditor = ({ value, onChange }: { value: string; onChange: (text: s
     };
 
     return (
-        <div className="md-editor-dark">
+        <div className="md-editor-dark space-y-2">
+            <div className="flex items-center gap-2 mb-2 bg-[#1B2838] p-2 rounded-xl border border-white/5 w-fit">
+                <button type="button" onClick={() => wrapAlignment('left')} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-primary transition-all" title="Align Left"><AlignLeft size={18} /></button>
+                <button type="button" onClick={() => wrapAlignment('center')} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-primary transition-all" title="Align Center"><AlignCenter size={18} /></button>
+                <button type="button" onClick={() => wrapAlignment('right')} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-primary transition-all" title="Align Right"><AlignRight size={18} /></button>
+                <button type="button" onClick={() => wrapAlignment('justify')} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-primary transition-all" title="Justify"><AlignJustify size={18} /></button>
+                <div className="w-px h-6 bg-white/10 mx-1"></div>
+                <button type="button" onClick={() => onChange(`${value}\n\n<span style="color: red">TEXT</span>`)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-red-500 transition-all" title="Red Text"><Type size={18} className="text-red-500" /></button>
+                <button type="button" onClick={() => onChange(`${value}\n\n<span style="color: green">TEXT</span>`)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-green-500 transition-all" title="Green Text"><Type size={18} className="text-green-500" /></button>
+                <button type="button" onClick={() => onChange(`${value}\n\n<span style="font-size: 24px">LARGE TEXT</span>`)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-all font-bold" title="Large Text">A+</button>
+            </div>
             <MdEditor
                 value={value}
                 style={{ height: '280px', border: 'none' }}
                 renderHTML={(text) => mdParser.render(text)}
                 onChange={handleEditorChange}
                 onImageUpload={handleImageUpload}
-                placeholder="Write the detailed news content here (supports **bold**, *italic*, tables, lists...)..."
+                placeholder="Write the detailed news content here (supports **bold**, *italic*, HTML alignment, tables...)..."
                 config={{
                     view: { menu: true, md: true, html: true },
                     canView: { menu: true, md: true, html: true, fullScreen: true, hideMenu: true },
