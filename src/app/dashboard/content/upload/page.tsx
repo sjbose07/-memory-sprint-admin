@@ -117,7 +117,7 @@ export default function UploadPage() {
 
             <AIAssistPanel 
               mode={questionType}
-              onOutput={(text) => setContent(prev => prev ? prev + '\n\n' + text : text)}
+              onOutput={(text) => setContent((prev: any) => prev ? prev + '\n\n' + text : text)}
             />
 
 

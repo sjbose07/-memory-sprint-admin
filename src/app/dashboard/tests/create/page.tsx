@@ -37,10 +37,10 @@ function CreateTestForm() {
 
   useEffect(() => {
     if (chapterId) {
-      setFormData(prev => ({ ...prev, chapter_id: chapterId }));
+      setFormData((prev: any) => ({ ...prev, chapter_id: chapterId }));
     }
     if (chapterName && !formData.title) {
-      setFormData(prev => ({ ...prev, title: `Test: ${chapterName}` }));
+      setFormData((prev: any) => ({ ...prev, title: `Test: ${chapterName}` }));
     }
   }, [chapterId, chapterName]);
 

@@ -286,7 +286,7 @@ function CAArticlesContent() {
                             <div className="p-4 border-b border-white/5 flex justify-between items-center bg-black/20">
                                 <AIAssistPanel 
                                     mode="oneliner" 
-                                    onOutput={(text) => setFormData(prev => ({ ...prev, content: text }))} 
+                                    onOutput={(text) => setFormData((prev: any) => ({ ...prev, content: text }))} 
                                 />
                                 <button
                                     type="submit"

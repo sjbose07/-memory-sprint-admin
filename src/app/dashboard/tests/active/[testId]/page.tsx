@@ -73,7 +73,7 @@ export default function ActiveTestPage() {
         if (loading || completed || timeLeft <= 0) return;
 
         timerRef.current = setInterval(() => {
-            setTimeLeft(prev => {
+            setTimeLeft((prev: any) => {
                 if (prev <= 1) {
                     clearInterval(timerRef.current!);
                     handleSubmit();
@@ -96,7 +96,7 @@ export default function ActiveTestPage() {
 
     const handleOptionSelect = (option: string) => {
         if (completed || submitting) return;
-        setAnswers(prev => ({
+        setAnswers((prev: any) => ({
             ...prev,
             [questions[currentIndex].id]: option
         }));
@@ -128,7 +128,7 @@ export default function ActiveTestPage() {
 
     const handleNext = () => {
         if (currentIndex < questions.length - 1) {
-            setCurrentIndex(prev => prev + 1);
+            setCurrentIndex((prev: any) => prev + 1);
         } else {
             if (confirm("Are you sure you want to finish the test?")) {
                 handleSubmit();
@@ -139,7 +139,7 @@ export default function ActiveTestPage() {
     const handleBack = () => {
         if (testConfig?.is_strict) return;
         if (currentIndex > 0) {
-            setCurrentIndex(prev => prev - 1);
+            setCurrentIndex((prev: any) => prev - 1);
         }
     };
 

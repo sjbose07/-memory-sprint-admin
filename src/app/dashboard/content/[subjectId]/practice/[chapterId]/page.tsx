@@ -97,7 +97,7 @@ export default function PracticePage() {
         const currentQ = questions[currentIndex];
         const isCorrect = selectedOption === currentQ.correct_option;
 
-        setResults(prev => ({
+        setResults((prev: any) => ({
             ...prev,
             [currentQ.id]: { selected: selectedOption, isCorrect }
         }));
@@ -106,7 +106,7 @@ export default function PracticePage() {
 
     const handleNext = useCallback(async () => {
         if (currentIndex < questions.length - 1) {
-            setCurrentIndex(prev => prev + 1);
+            setCurrentIndex((prev: any) => prev + 1);
         } else {
             handleFinish();
         }
@@ -287,7 +287,7 @@ export default function PracticePage() {
 
                         <div className="flex justify-between items-center pt-10 mt-10 border-t border-white/5">
                             <button
-                                onClick={() => currentIndex > 0 && setCurrentIndex(prev => prev - 1)}
+                                onClick={() => currentIndex > 0 && setCurrentIndex((prev: any) => prev - 1)}
                                 disabled={currentIndex === 0}
                                 className="flex items-center gap-2 text-gray-500 font-bold hover:text-white disabled:opacity-0 transition-all"
                             >
