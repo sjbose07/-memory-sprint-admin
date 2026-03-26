@@ -113,7 +113,7 @@ export default function DashboardLayout({
         <div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5 mt-4">
           <Link href="/dashboard" className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary rounded-md flex items-center justify-center font-black text-white text-xl">M</div>
-            <span className="text-2xl font-bold text-title-text tracking-tight">NextAdmin</span>
+            <h1 className="text-2xl font-bold text-title-text tracking-tight">NextAdmin</h1>
           </Link>
         </div>
 
@@ -121,7 +121,7 @@ export default function DashboardLayout({
         <div className="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear px-4 py-4 lg:px-6">
           <nav className="mt-5 px-4 py-4 lg:mt-9 lg:px-6">
             <div>
-              <h3 className="mb-4 ml-4 text-sm font-semibold text-body-text uppercase tracking-widest">MENU</h3>
+              <h2 className="mb-4 ml-4 text-sm font-semibold text-body-text uppercase tracking-widest">MENU</h2>
               <ul className="mb-6 flex flex-col gap-1.5">
                 <NavItem href="/dashboard" icon={<LayoutDashboard size={18} />} label="Dashboard" active={pathname === "/dashboard"} />
                 <NavItem href="/dashboard/users" icon={<Users size={18} />} label="User Management" active={pathname === "/dashboard/users"} />
@@ -152,7 +152,7 @@ export default function DashboardLayout({
         <header className="sticky top-0 z-40 flex w-full bg-card drop-shadow-1 border-b border-stroke">
           <div className="flex flex-grow items-center justify-between px-4 py-4 shadow-2 md:px-6 2xl:px-11">
             <div className="flex items-center gap-2 sm:gap-4">
-              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="block rounded-sm border border-stroke bg-card p-1.5 shadow-sm">
+              <button aria-label="Toggle Sidebar" onClick={() => setSidebarOpen(!sidebarOpen)} className="block rounded-sm border border-stroke bg-card p-1.5 shadow-sm">
                 <Menu size={20} className="text-body-text" />
               </button>
             </div>

@@ -89,7 +89,7 @@ export default function AIAssistPanel({ onOutput, mode }: AIAssistPanelProps) {
 
   return (
     <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-5 space-y-4 shadow-sm">
-      <div className="flex items-center gap-2 text-purple-400 font-bold mb-1">
+      <div className="flex items-center gap-2 text-emerald-400 font-bold mb-1">
         <Sparkles className="w-5 h-5" />
         <h3>AI Document Extractor & Enhancer {mode === 'mcq' && '(MCQ Mode)'}</h3>
       </div>
@@ -99,7 +99,7 @@ export default function AIAssistPanel({ onOutput, mode }: AIAssistPanelProps) {
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder={mode === 'mcq' ? "Any specific instructions? (e.g. 'Extract only difficult history questions')" : "Any specific instructions for one-liner? (e.g. 'Force historical facts only')"}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 min-h-[80px] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 resize-y transition-all"
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 min-h-[80px] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 resize-y transition-all"
           disabled={isProcessing}
         />
 
@@ -109,7 +109,7 @@ export default function AIAssistPanel({ onOutput, mode }: AIAssistPanelProps) {
               <button
                 type="button"
                 onClick={() => setActiveStyle("standard")}
-                className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-all border ${activeStyle === 'standard' ? 'bg-purple-500 text-white border-purple-400 shadow-lg shadow-purple-500/20' : 'bg-white/5 text-gray-400 border-white/5 hover:text-white'}`}
+                className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-all border ${activeStyle === 'standard' ? 'bg-emerald-500 text-white border-emerald-400 shadow-lg shadow-emerald-500/20' : 'bg-white/5 text-gray-400 border-white/5 hover:text-white'}`}
               >
                 Standard Style
               </button>
@@ -129,7 +129,7 @@ export default function AIAssistPanel({ onOutput, mode }: AIAssistPanelProps) {
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value)}
                   disabled={isProcessing}
-                  className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-purple-300 focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+                  className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
                 >
                   {availableModels.map(m => (
                     <option key={m} value={m} className="bg-gray-900 text-white">{m}</option>
@@ -176,7 +176,7 @@ export default function AIAssistPanel({ onOutput, mode }: AIAssistPanelProps) {
           </button>
           
           {file && (
-             <div className="flex items-center gap-2 bg-purple-500/10 text-purple-300 px-3 py-2 rounded-xl border border-purple-500/20 text-sm">
+             <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-300 px-3 py-2 rounded-xl border border-emerald-500/20 text-sm">
                 {file.type === 'application/pdf' ? <FileText className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
                 <span className="truncate max-w-[150px] font-medium">{file.name}</span>
                 <button type="button" onClick={clearFile} disabled={isProcessing} className="hover:text-white ml-2">
@@ -189,7 +189,7 @@ export default function AIAssistPanel({ onOutput, mode }: AIAssistPanelProps) {
              type="button"
              onClick={handleGenerate}
              disabled={isProcessing || (!file && !prompt.trim())}
-             className="ml-auto flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/25"
+             className="ml-auto flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/25"
           >
              {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
              <span>{mode === 'mcq' ? "Generate MCQs" : "Process & Enhance"}</span>

@@ -95,7 +95,7 @@
 .rc-md-editor .editor-container .sec-md .input {
   background: #0D1B2A !important;
   color: #e2e8f0 !important;
-  caret-color: #7C3AED !important;
+  caret-color: #10B981 !important;
   font-size: 14px !important;
   line-height: 1.75 !important;
   padding: 16px !important;
@@ -146,8 +146,8 @@
   color: #e2e8f0 !important;
 }
 .rc-md-editor .custom-html-style table th {
-  background: rgba(124,58,237,0.18) !important;
-  color: #c4b5fd !important;
+  background: rgba(16,185,129,0.18) !important;
+  color: #6ee7b7 !important;
   font-weight: bold;
 }
 .rc-md-editor .custom-html-style table tr:nth-child(even) td {

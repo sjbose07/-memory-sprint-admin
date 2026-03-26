@@ -56,7 +56,7 @@ export default function Dashboard() {
     <div className="space-y-8">
       <header className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-title-text">Welcome back, {user?.name || "Admin"}!</h2>
+          <h1 className="text-2xl font-bold text-title-text">Welcome back, {user?.name || "Admin"}!</h1>
           <p className="text-sm text-body-text mt-1">Here's a snapshot of your platform's performance.</p>
         </div>
         <Link href="/dashboard/tests" className="btn-primary">
@@ -95,8 +95,8 @@ export default function Dashboard() {
 
       {/* Charts & Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mt-8">
-        <div className="lg:col-span-3 card p-6">
-          <h3 className="font-semibold text-lg text-title-text mb-4">Subject Accuracy (Avg)</h3>
+        <div aria-label="Subject Accuracy Chart" className="lg:col-span-3 card p-6">
+          <h2 className="font-semibold text-lg text-title-text mb-4">Subject Accuracy (Avg)</h2>
           <ResponsiveContainer width="100%" height={350}>
             <BarChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
@@ -115,8 +115,8 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
 
-        <div className="lg:col-span-2 card p-6">
-          <h3 className="font-semibold text-lg text-title-text mb-4">Recent Submissions</h3>
+        <div aria-label="Recent Submissions List" className="lg:col-span-2 card p-6">
+          <h2 className="font-semibold text-lg text-title-text mb-4">Recent Submissions</h2>
           <div className="space-y-4">
             {loading ? (
               <p className="text-center py-10 text-body-text">Loading activity...</p>
@@ -152,7 +152,7 @@ import Link from "next/link";
 
 function StatCard({ icon, label, value, change }: { icon: any, label: string, value: string, change: string }) {
   return (
-    <div className="card p-6 flex flex-col justify-between">
+    <div aria-label="Dashboard Statistics" className="card p-6 flex flex-col justify-between">
       <div className="flex justify-between items-center">
         <div className="w-12 h-12 rounded-full bg-body flex items-center justify-center">
           {icon}

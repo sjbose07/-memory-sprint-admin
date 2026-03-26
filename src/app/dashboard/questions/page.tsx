@@ -241,7 +241,7 @@ function QuestionsContent() {
                                     {q.chapter_name ? (
                                         <span className="bg-secondary/20 text-secondary text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">{q.chapter_name}</span>
                                     ) : q.current_affair_title ? (
-                                        <span className="bg-purple-500/20 text-purple-400 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">CA: {q.current_affair_title}</span>
+                                        <span className="bg-cyan-500/20 text-cyan-400 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">CA: {q.current_affair_title}</span>
                                     ) : null}
                                     {q.chapter_tags && q.chapter_tags.map((tag: string, i: number) => (
                                         <span key={i} className="bg-white/5 text-gray-400 text-[10px] font-bold px-2 py-1 rounded-md tracking-wider">
