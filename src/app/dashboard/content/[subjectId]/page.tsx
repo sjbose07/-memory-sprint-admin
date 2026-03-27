@@ -68,6 +68,21 @@ const MarkdownEditor = ({ value, onChange, subject }: { value: string; onChange:
     };
 
     const handleImageUpload = async (file: File): Promise<string> => {
+        if (file.type.startsWith("video/")) {
+            // Direct Cloudinary upload for videos to bypass Vercel 4.5MB limit
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'unsigned_preset_mobile'); // Must be created in Cloudinary
+            
+            const response = await fetch(`https://api.cloudinary.com/v1_1/memory-sprint/video/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error?.message || "Video upload failed");
+            return data.secure_url;
+        }
+
         const compressedFile = await compressImage(file, 0.8);
         const formData = new FormData();
         formData.append("subject", subject?.name || "General");

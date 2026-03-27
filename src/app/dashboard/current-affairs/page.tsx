@@ -69,6 +69,19 @@ const MarkdownEditor = ({ value, onChange }: { value: string; onChange: (text: s
     };
 
     const handleImageUpload = async (file: File): Promise<string> => {
+        if (file.type.startsWith("video/")) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'unsigned_preset_mobile'); 
+            const response = await fetch(`https://api.cloudinary.com/v1_1/memory-sprint/video/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error?.message || "Video upload failed");
+            return data.secure_url;
+        }
+
         const compressedFile = await compressImage(file, 0.85);
         const formData = new FormData();
         formData.append("subject", "Current Affairs");
