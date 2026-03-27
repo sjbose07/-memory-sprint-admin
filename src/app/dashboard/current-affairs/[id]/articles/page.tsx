@@ -29,9 +29,27 @@ import AIAssistPanel from "@/components/AIAssistPanel";
 import MdEditor from 'react-markdown-editor-lite';
 import MarkdownIt from 'markdown-it';
 import 'react-markdown-editor-lite/lib/index.css';
+import { compressImage } from '@/lib/imageUtils';
 
 const mdParser = new MarkdownIt({ html: true, linkify: true, typographer: true }).enable('table');
 
+const defaultRender = mdParser.renderer.rules.image || function(tokens, idx, options, env, self) {
+  return self.renderToken(tokens, idx, options);
+};
+
+mdParser.renderer.rules.image = function (tokens, idx, options, env, self) {
+  const token = tokens[idx];
+  const srcIndex = token.attrIndex('src');
+  const src = srcIndex >= 0 ? token.attrs![srcIndex][1] : '';
+  
+  const isVideo = src.match(/\.(mp4|webm|mov|mkv|avi)$/i) || src.includes('/video/upload/');
+  
+  if (isVideo) {
+    return `<video controls src="${src}" style="max-width: 100%; border-radius: 8px; margin: 10px 0; background: #000;"></video>`;
+  }
+  
+  return defaultRender(tokens, idx, options, env, self);
+};
 const MarkdownEditor = ({ value, onChange }: { value: string; onChange: (text: string) => void }) => {
     const handleEditorChange = useCallback(({ text }: { text: string }) => {
         onChange(text);
@@ -46,10 +64,11 @@ const MarkdownEditor = ({ value, onChange }: { value: string; onChange: (text: s
     };
 
     const handleImageUpload = async (file: File): Promise<string> => {
+        const compressedFile = await compressImage(file, 0.85);
         const formData = new FormData();
         formData.append("subject", "Current Affairs");
         formData.append("type", "image");
-        formData.append("file", file);
+        formData.append("file", compressedFile);
         const res = await api.post("/upload", formData, { headers: { "Content-Type": "multipart/form-data" } });
         return res.data.url;
     };

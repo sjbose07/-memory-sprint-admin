@@ -30,61 +30,29 @@ import AIAssistPanel from "@/components/AIAssistPanel";
 import MdEditor from 'react-markdown-editor-lite';
 import MarkdownIt from 'markdown-it';
 import 'react-markdown-editor-lite/lib/index.css';
+import { compressImage } from '@/lib/imageUtils';
 
 const mdParser = new MarkdownIt({ html: true, linkify: true, typographer: true }).enable('table');
 
-const compressImage = async (file: File, quality = 0.8): Promise<File> => {
-    return new Promise((resolve) => {
-        if (!file.type.startsWith('image/') || file.type === 'image/gif') {
-            return resolve(file);
-        }
-
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target?.result as string;
-            img.onload = () => {
-                const canvas = document.createElement("canvas");
-                const ctx = canvas.getContext("2d");
-                if (!ctx) return resolve(file);
-
-                // Optional: Resize if too large
-                const MAX_WIDTH = 1920;
-                const MAX_HEIGHT = 1080;
-                let width = img.width;
-                let height = img.height;
-
-                if (width > MAX_WIDTH) {
-                    height *= MAX_WIDTH / width;
-                    width = MAX_WIDTH;
-                }
-                if (height > MAX_HEIGHT) {
-                    width *= MAX_HEIGHT / height;
-                    height = MAX_HEIGHT;
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                ctx.drawImage(img, 0, 0, width, height);
-
-                canvas.toBlob(
-                    (blob) => {
-                        if (blob) {
-                            resolve(new File([blob], file.name, { type: "image/jpeg" }));
-                        } else {
-                            resolve(file);
-                        }
-                    },
-                    "image/jpeg",
-                    quality
-                );
-            };
-            img.onerror = () => resolve(file);
-        };
-        reader.onerror = () => resolve(file);
-    });
+// Custom renderer to support video previews in the Markdown editor
+const defaultRender = mdParser.renderer.rules.image || function(tokens, idx, options, env, self) {
+  return self.renderToken(tokens, idx, options);
 };
+
+mdParser.renderer.rules.image = function (tokens, idx, options, env, self) {
+  const token = tokens[idx];
+  const srcIndex = token.attrIndex('src');
+  const src = srcIndex >= 0 ? token.attrs![srcIndex][1] : '';
+  
+  const isVideo = src.match(/\.(mp4|webm|mov|mkv|avi)$/i) || src.includes('/video/upload/');
+  
+  if (isVideo) {
+    return `<video controls src="${src}" style="max-width: 100%; border-radius: 8px; margin: 10px 0; background: #000;"></video>`;
+  }
+  
+  return defaultRender(tokens, idx, options, env, self);
+};
+
 
 const MarkdownEditor = ({ value, onChange, subject }: { value: string; onChange: (text: string) => void; subject: any }) => {
     const handleChange = useCallback(({ text }: { text: string }) => {
