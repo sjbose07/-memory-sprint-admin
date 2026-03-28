@@ -69,7 +69,7 @@ const MarkdownEditor = ({ value, onChange, subject }: { value: string; onChange:
 
     const handleImageUpload = async (file: File): Promise<string> => {
         const isVideo = file.type.startsWith("video/");
-        const isLargePdf = file.mimetype === "application/pdf" && file.size > 4 * 1024 * 1024;
+        const isLargePdf = file.type === "application/pdf" && file.size > 4 * 1024 * 1024;
 
         if (isVideo || isLargePdf) {
             // Direct Cloudinary upload for large files to bypass Vercel 4.5MB limit
