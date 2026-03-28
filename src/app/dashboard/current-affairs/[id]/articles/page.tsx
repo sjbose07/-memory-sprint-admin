@@ -64,17 +64,33 @@ const MarkdownEditor = ({ value, onChange }: { value: string; onChange: (text: s
     };
 
     const handleImageUpload = async (file: File): Promise<string> => {
-        if (file.type.startsWith("video/")) {
+        const isVideo = file.type.startsWith("video/");
+        const isLargePdf = file.type === "application/pdf" && file.size > 4 * 1024 * 1024;
+
+        if (isVideo || isLargePdf) {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', 'unsigned_preset_mobile'); 
-            const response = await fetch(`https://api.cloudinary.com/v1_1/memory-sprint/video/upload`, {
-                method: 'POST',
-                body: formData
-            });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error?.message || "Video upload failed");
-            return data.secure_url;
+            
+            const endpoint = isVideo ? 'video/upload' : 'raw/upload';
+
+            try {
+                const response = await fetch(`https://api.cloudinary.com/v1_1/memory-sprint/${endpoint}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    if (data.error?.message?.includes("Upload preset not found")) {
+                        throw new Error("Cloudinary Error: 'unsigned_preset_mobile' preset not found. Please create it in your Cloudinary Dashboard Settings > Upload.");
+                    }
+                    throw new Error(data.error?.message || "Upload failed");
+                }
+                return data.secure_url;
+            } catch (err: any) {
+                console.error("Direct Upload Error:", err);
+                throw err;
+            }
         }
 
         const compressedFile = await compressImage(file, 0.85);
